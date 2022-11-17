@@ -1,0 +1,1107 @@
+openapi: '3.0.2'
+info:
+  title: mensa.projekt-ipa.tech
+  version: '1.0'
+  description: |
+    # Zweck
+    Diese API dient zur Abfrage von Informationen zu den Mensen des Studierendenwerks Berlins.
+    # Authentifizierung
+    Zur Nutzung der API ist ein API Key notwendig. Dieser kann [hier](https://mensa.projektipa.tech/api-key) angefordert werden.
+    # Ratelimit
+    Die API ist auf 100 Anfragen pro Minute limitiert und 10000 Anfragen pro Stunde limitiert. Der Header X-RateLimit-Remaining gibt an, wie viele Anfragen noch verbleiben.
+    Sollten alle Anfragen verbraucht sein, wird ein HTTP Status Code 429 zurückgegeben, in welchem der Header X-RateLimit-Seconds-Till-Refill die Anzahl der Sekunden enthält, bis die Anfragen wieder verfügbar sind.
+    # Fehlercodes
+    Alle Fehler werden mit einem HTTP Status Code und einer detailierten Fehlermeldung im Body zurückgegeben.
+    | Code | Beschreibung |
+    | ---- | ------------ |
+    | 400 | Die gelieferten Parameter sind fehlerhaft (siehe Responsemessage für mehr Details) |
+    | 401 | X-API-KEY Header fehlt |
+    | 403 | Ungültiger API Key |
+    | 404 | Das angeforderte Objekt wurde nicht gefunden (siehe Responsemessage für mehr Details) |
+    | 409 | Konflikt beim Speichern von Daten |
+    | 429 | Zu viele Anfragen - Die Grenze von 100 Anfragen pro Minute/10000 Anfragen pro Stunde wurde überschritten |
+    | 500 | Serverfehler |
+
+
+servers:
+  - url: https://mensa.projekt-ipa.tech/api/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      description: <strong> To get an API key, please click <a href="https://mensa.projekt-ipa.tech/api-key">here</a> and enter your email address. You will receive an email with following instructions. </strong>
+  schemas:
+    CanteenComplete:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Mensa
+        name:
+          type: string
+          example: Mensa HTW Treskowallee
+          description: Name der Mensa
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: Treskowallee 8
+            city:
+              type: string
+              example: Berlin
+            zipcode:
+              type: string
+              example: 10318
+            district:
+              type: string
+              example: Lichtenberg
+            geolocation:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                  example: 52.492819049999994
+                longitude:
+                  type: number
+                  example: 13.524717013151513
+        contactInfo:
+          type: object
+          properties:
+            phone:
+              type: string
+              example: +49 30 9029 0
+            email:
+              type: string
+              example: mensen@stw.berlin
+        businessDays:
+          type: array
+          description: Öffnungszeiten der Mensa
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                example: Montag
+                description: |
+                  Wochentag der Öffnungszeit
+                  | Tag | Wert |
+                  | --- | ----------- |
+                  | Montag | Mo |
+                  | Dienstag | Di |
+                  | Mittwoch | Mi |
+                  | Donnerstag | Do |
+                  | Freitag | Fr |
+                  | Samstag | Sa |
+                  | Sonntag | So |
+              businesshours:
+                type: array
+                description: |
+                  Öffnungszeit der Mensa mit Start- und Endzeit und Öffnungszeiten-Typ
+
+                items:
+                  type: object
+                  properties:
+                    openAt:
+                      type: string
+                      example: 11:00
+                    closeAt:
+                      type: string
+                      example: 14:00
+                    businessHourType:
+                      type: string
+                      example: Mittagstisch
+                      description: |
+                        Bekannte Öffnungszeiten-Typen
+                        | Typ | Bedeutung |
+                        | --- | ----------- |
+                        | Mittagstisch | Die Zeit in welcher es Essen in der Mensa gibt |
+                        | Mensa | Die Zeit in der die Mensa generell geöffnet ist |
+                        | Backshop | Die Zeit in der der Backshop der Mensa geöffnet ist |
+        url:
+          type: string
+          example: mensen/einrichtungen/hochschule-für-technik-und-wirtschaft-berlin/mensa-htw-treskowallee.html
+          description: URL der Mensa auf der Website der STW (ohne https://stw.berlin/)
+        lastUpdated:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Letztes Update der Daten
+        canteenReviews:
+          description: Die letzten 100 Bewertungen der Mensa
+          type: array
+          items:
+            $ref: '#/components/schemas/CanteenReview'    
+    CanteenLazy:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Mensa
+        name:
+          type: string
+          example: Mensa HTW Treskowallee
+          description: Name der Mensa
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              example: Treskowallee 8
+            city:
+              type: string
+              example: Berlin
+            zipcode:
+              type: string
+              example: 10318
+            district:
+              type: string
+              example: Lichtenberg
+            geolocation:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                  example: 52.492819049999994
+                longitude:
+                  type: number
+                  example: 13.524717013151513
+        contactInfo:
+          type: object
+          properties:
+            phone:
+              type: string
+              example: +49 30 9029 0
+            email:
+              type: string
+              example: mensen@stw.berlin
+        businessDays:
+          type: array
+          description: Öffnungszeiten der Mensa
+          items:
+            type: object
+            properties:
+              day:
+                type: string
+                example: Montag
+                description: |
+                  Wochentag der Öffnungszeit
+                  | Tag | Wert |
+                  | --- | ----------- |
+                  | Montag | Mo |
+                  | Dienstag | Di |
+                  | Mittwoch | Mi |
+                  | Donnerstag | Do |
+                  | Freitag | Fr |
+                  | Samstag | Sa |
+                  | Sonntag | So |
+              businesshours:
+                type: array
+                description: Öffnungszeiten an diesem Tag unterteilt nach Öffnungszeiten-Typ
+                items:
+                  type: object
+                  properties:
+                    openAt:
+                      type: string
+                      example: 11:00
+                    closeAt:
+                      type: string
+                      example: 14:00
+                    businessHourType:
+                      type: string
+                      example: Mittagstisch
+                      description: |
+                        Bekannte Öffnungszeiten-Typen
+                        | Typ | Bedeutung |
+                        | --- | ----------- |
+                        | Mittagstisch | Die Zeit in welcher es Essen in der Mensa gibt |
+                        | Mensa | Die Zeit in der die Mensa generell geöffnet ist |
+                        | Backshop | Die Zeit in der der Backshop der Mensa geöffnet ist |
+        url:
+          type: string
+          example: mensen/einrichtungen/hochschule-für-technik-und-wirtschaft-berlin/mensa-htw-treskowallee.html
+          description: URL der Mensa auf der Website der STW (ohne https://stw.berlin/)
+        lastUpdated:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Letztes Update der Daten  
+    CanteenReview:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Bewertung
+        canteenID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Mensa, welche bewertet wurde
+        userID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Nutzers, welcher die Bewertung abgegeben hat. Diese ID muss vom API Nutzer selber generiert und mitgeschickt werden. Muss immer unique sein (nur ein Review pro Nutzer pro Mensa)
+        averageRating:
+          type: number
+          example: 4.5
+          description: Durchschnittliche Bewertung der Mensa, hilfreich als schneller Filter
+        detailRatings:
+          description: Detailierte Bewertungen der Mensa, muss mindestes 1 Detailbewertung enthalten
+          type: array
+          items:
+            type: object
+            properties:
+              rating:
+                type: number
+                example: 4.5
+              name:
+                type: string
+                example: Essen
+                description: Name der Detailbewertung. Kann jeden Wert haben, muss aber immer mitgeschickt werden
+        comment:
+          type: string
+          example: Sehr lecker!
+          description: Kommentar des Nutzers zur Mensa, optional
+        lastUpdated:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Letztes Update des Reviews
+        createdAt:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Erstellungsdatum des Reviews
+    CanteenReviewUpdate:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Bewertung
+        canteenID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Mensa, welche bewertet wurde
+        userID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Nutzers, welcher die Bewertung abgegeben hat. Diese ID muss vom API Nutzer selber generiert und mitgeschickt werden. Muss immer unique sein (nur ein Review pro Nutzer pro Mensa)
+        detailRatings:
+          description: Detailierte Bewertungen der Mensa, muss mindestes 1 Detailbewertung enthalten
+          type: array
+          items:
+            type: object
+            properties:
+              rating:
+                type: number
+                example: 4.5
+              name:
+                type: string
+                example: Essen
+        comment:
+          type: string
+          example: Sehr lecker!
+          description: Kommentar des Nutzers zur Mensa, optional
+    MealComplete:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Gerichts
+        name:
+          type: string
+          example: Hähnchenbrust mit Reis
+          description: Name des Gerichts
+        prices:
+          type: array
+          description: Preise des Gerichts, aufgeteilt nach Preis-Typ
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+                example: 3.5
+                description: Preis des Gerichts
+              priceType:
+                type: string
+                example: Student
+                description: Preis-Typ des Gerichts
+                enum:
+                  - Student
+                  - Angestellte
+                  - Gäste
+        category:
+          type: string
+          example: Hauptgericht
+          description: Kategorie des Gerichts
+        additives:
+          type: array
+          description: Zusatzstoffe und Allergene des Gerichts
+          items:
+            $ref : '#/components/schemas/Additive'
+        badges:
+          type: array
+          description: Weitere Infos zum Gerichts (z.B. Nutriscore etc)
+          items:
+            $ref: '#/components/schemas/Badge'
+        waterBilanz:
+          type: number
+          example: 0.5
+          description: Wasserbilanz in Liter
+        co2Bilanz:
+          type: number
+          example: 0.5
+          description: CO2 Bilanz in g
+        mealReviews:
+          type: array
+          description: Die letzten 100 Bewertungen des Gerichts
+          items:
+            $ref: '#/components/schemas/MealReview'
+    MealOnly:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Gerichts
+        name:
+          type: string
+          example: Hähnchenbrust mit Reis
+          description: Name des Gerichts
+        prices:
+          type: array
+          description: Preise des Gerichts, aufgeteilt nach Preis-Typ
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+                example: 3.5
+                description: Preis des Gerichts
+              priceType:
+                type: string
+                example: Student
+                description: Preis-Typ des Gerichts
+                enum:
+                  - Student
+                  - Angestellte
+                  - Gäste
+        category:
+          type: string
+          example: Hauptgericht
+          description: Kategorie des Gerichts
+        additives:
+          type: array
+          description: Zusatzstoffe und Allergene des Gerichts
+          items:
+            $ref : '#/components/schemas/Additive'
+        badges:
+          type: array
+          description: Weitere Infos zum Gerichts (z.B. Nutriscore etc)
+          items:
+            $ref: '#/components/schemas/Badge'
+        waterBilanz:
+          type: number
+          example: 0.5
+          description: Wasserbilanz in Liter
+        co2Bilanz:
+          type: number
+          example: 0.5
+          description: CO2 Bilanz in g
+    MealLazy:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Gerichts
+        name:
+          type: string
+          example: Hähnchenbrust mit Reis
+          description: Name des Gerichts
+        prices:
+          type: array
+          description: Preise des Gerichts, aufgeteilt nach Preis-Typ
+          items:
+            type: object
+            properties:
+              price:
+                type: number
+                example: 3.5
+                description: Preis des Gerichts
+              priceType:
+                type: string
+                example: Student
+                description: Preis-Typ des Gerichts
+                enum:
+                  - Student
+                  - Angestellte
+                  - Gäste
+        category:
+          type: string
+          example: Hauptgericht
+          description: Kategorie des Gerichts
+        additives:
+          type: array
+          description: IDs der Zusatzstoffe und Allergene des Gerichts
+          items:
+            type: string
+            format: hex
+            example: 5f6b9c6c7c8a9e0017a5f3b7
+        badges:
+          type: array
+          description: IDs der Weitere Infos zum Gerichts (z.B. Nutriscore etc)
+          items:
+            type: string
+            format: hex
+            example: 5f6b9c6c7c8a9e0017a5f3b7
+        waterBilanz:
+          type: number
+          example: 0.5
+          description: Wasserbilanz in Liter
+        co2Bilanz:
+          type: number
+          example: 0.5
+          description: CO2 Bilanz in g
+    Badge:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Badges
+        name:
+          type: string
+          example: Vegan
+          description: Name der Badges
+        description:
+          type: string
+          example: Das Gericht ist vegan
+          description: Beschreibung der Badges
+    Additive:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Zusatzstoffes
+        text:
+          type: string
+          example: Gluten
+          description: Beschreibung des Zusatzstoffes
+        referenceid:
+          type: string
+          example: 24a
+          description: Referenz-ID des Zusatzstoffes (Bei der Mensa)
+    
+    MealReview:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Bewertung
+        mealID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Gerichts, welches bewertet wurde
+        userID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Nutzers, welcher die Bewertung abgegeben hat. Diese ID muss vom API Nutzer selber generiert und mitgeschickt werden. Muss immer unique sein (nur ein Review pro Nutzer pro Gericht)
+        averageRating:
+          type: number
+          example: 4.5
+          description: Durchschnittliche Bewertung des Gerichts, hilfreich als schneller Filter
+        detailRatings:
+          type: array
+          description: Detailierte Bewertungen des Gerichts, muss mindestes 1 Detailbewertung enthalten
+          items:
+            type: object
+            properties:
+              rating:
+                type: number
+                example: 4.5
+              name:
+                type: string
+                example: Essen
+        comment:
+          type: string
+          example: Sehr lecker!
+          description: Kommentar des Nutzers zum Gericht, optional
+        lastUpdated:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Letztes Update des Reviews
+        createdAt:
+          type: string
+          format: date-time
+          example: 2020-09-24T12:00:00.000Z
+          description: Erstellungsdatum des Reviews
+    MealReviewUpdate:
+      type: object
+      properties:
+        ID: 
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID der Bewertung, muss bereits vorhanden sein, falls PUT verwendet wird
+        mealID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Gerichts, welches bewertet wurde
+        userID:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+          description: ID des Nutzers, welcher die Bewertung abgegeben hat. Diese ID muss vom API Nutzer selber generiert und mitgeschickt werden. Muss immer unique sein (nur ein Review pro Nutzer pro Gericht)
+        detailRatings:
+          type: array
+          description: Detailierte Bewertungen des Gerichts, muss mindestes 1 Detailbewertung enthalten
+          items:
+            type: object
+            properties:
+              rating:
+                type: number
+                example: 4.5
+              name:
+                type: string
+                example: Essen
+        comment:
+          type: string
+          example: Sehr lecker!
+          description: Kommentar des Nutzers zum Gericht, optional
+    MenueCardComplete:
+      type: object
+      properties:
+        date: 
+          type: string
+          format: date
+          example: 2020-09-24
+        canteeenId:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+        meals:
+          type: array
+          description: Gerichte der Speisekarte für den Tag und die Mensa
+          items:
+            $ref: '#/components/schemas/MealOnly'
+    MenueCardLazy:
+      type: object
+      properties:
+        date: 
+          type: string
+          format: date
+          example: 2020-09-24
+        canteeenId:
+          type: string
+          format: hex
+          example: 5f6b9c6c7c8a9e0017a5f3b7
+        meals:
+          type: array
+          description: Ids der Gerichte der Speisekarte für den Tag und die Mensa
+          items:
+            type: string
+            format: hex
+            example: 5f6b9c6c7c8a9e0017a5f3b7
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+
+  /canteen:
+   get:
+    summary: Ruft alle Mensen ab, die den als Queryparametern angebenen Filterkriterien entsprechen
+    parameters:
+      - in: query
+        name: ID
+        schema:
+          type: string
+        description: ID der Mensa
+      - in: query
+        name: loadingtype
+        schema:
+          type: string
+          enum:
+            - lazy
+            - complete
+          default: lazy
+        description: Beschreibt, wie die Daten geladen werden sollen
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Filtert nach Namen
+      - in: query
+        name: zipcode
+        schema:
+          type: string
+        description: Filtert nach Postleitzahl
+      - in: query
+        name: district
+        schema:
+          type: string
+        description: Filtert nach Bezirk
+      - in: query
+        name: clickandcollect
+        schema:
+          type: boolean
+        description: Filter nach Click&Collect
+      - in: query
+        name: time
+        schema:
+          type: string
+        description: Filtert nach Öffnungszeiten (siehe open)
+      - in: query
+        name: businesshourtype
+        schema:
+          type: string
+          enum:
+            - Mensa
+            - Mittagstisch
+            - Backshop
+        description: Filtert nach Öffnungszeiten-Typ (eignet sich um z.B. Mensen mit Backshop zu filtern)
+      - in: query
+        name: open
+        schema:
+          type: string
+        description: |
+          Filter nach Mensen, die zu einem bestimmten Zeitpunkt geöffnet sind. Der Parameter wird dabei so übergeben:
+          
+          open=WOCHENTAG;UHRZEIT;ÖFFNUNGSZEITENTYP
+          
+          Es muss mindestens der WOCHENTAG übergeben werden, der Rest ist optional. 
+          
+          Wenn nur der WOCHENTAG übergeben wird, werden alle Mensen zurückgegeben, die an diesem Wochentag geöffnet sind. Wenn zusätzlich die Uhrzeit übergeben wird, werden nur die Mensen zurückgegeben, die zu dieser Uhrzeit geöffnet sind. Wenn zusätzlich der Öffnungszeiten-Typ übergeben wird, werden nur die Mensen zurückgegeben, die zu dieser Uhrzeit geöffnet sind und den angegebenen Öffnungszeiten-Typ haben.
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/CanteenComplete'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/CanteenLazy'
+                
+                
+  /meal:
+    get:
+      summary: Ruft alle Mahlzeiten ab, die den als Queryparametern angebenen Filterkriterien entsprechen
+      parameters:
+        - in: query
+          name: ID
+          schema:
+            type: string
+          description: ID der Mahlzeit
+        - in: query
+          name: loadingtype
+          schema:
+            type: string
+            enum:
+              - lazy
+              - complete
+              - mealonly
+            default: lazy
+          description: Beschreibt, wie die Daten geladen werden sollen
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filtert nach der Essenskategorie
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Filtert nach Namen
+        - in: query
+          name: price
+          schema:
+            type: string
+            example: 2.50;Studierende
+          description: Filtert nach Preis gleich dem angegebenen Preis. Der Preis muss dabei in der Form PREIS;PREISTYP angegeben werden. PREISTYP ist dabei optional und kann Studierende, Angestellte oder Gäste sein. Der Defaultwert für PREISTYP ist Studierende.
+        - in: query
+          name: pricegreater
+          schema:
+            type: string
+            example: 2.50;Studierende
+          description: Filtert nach Preis größer als der angegebene Preis. Der Preis muss dabei in der Form PREIS;PREISTYP angegeben werden. PREISTYP ist dabei optional und kann Studierende, Angestellte oder Gäste sein. Der Defaultwert für PREISTYP ist Studierende.
+        - in: query
+          name: pricelower
+          schema:
+            type: string
+            example: 2.50;Studierende
+          description: Filtert nach Preis kleiner als der angegebene Preis. Der Preis muss dabei in der Form PREIS;PREISTYP angegeben werden. PREISTYP ist dabei optional und kann Studierende, Angestellte oder Gäste sein. Der Defaultwert für PREISTYP ist Studierende.
+        - in: query
+          name: additive
+          schema:
+            type: string
+          description: Filtert nach Zusatzstoffen. Deren IDs werden dabei als ; getrennte Liste angegeben. 
+        - in: query
+          name: badges
+          schema:
+            type: string
+          description: Filtert nach Auszeichnungen. Die IDs der Auszeichnungen werden dabei als ; getrennte Liste angegeben.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                    - $ref: '#/components/schemas/MealComplete'
+                  - type: array
+                    items:
+                    - $ref: '#/components/schemas/MealLazy'
+                  - type: array
+                    items:
+                    - $ref: '#/components/schemas/MealOnly'
+                  
+  /additive:
+    get:
+      summary: Ruft alle Zusatzstoffe ab
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Additive'
+
+  /badge:
+    get:
+      summary: Ruft alle Auszeichnungen ab
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Badge'
+
+  /menue:
+    get:
+      summary: Ruft alle Menüs ab, die den als Queryparametern angebenen Filterkriterien entsprechen
+      parameters:
+        - in: query
+          name: loadingtype
+          schema:
+            type: string
+            enum:
+              - lazy
+              - complete
+            default: lazy
+          description: Beschreibt, wie die Daten geladen werden sollen
+        - in: query
+          name: canteenId
+          schema:
+            type: string
+          description: Filtert nach Mensa
+        - in: query
+          name: startdate
+          schema:
+            type: string
+            format: YYYY-MM-DD
+            example: 2022-01-01
+          description: Alle Menüs, die nach diesem Datum liegen
+        - in: query
+          name: enddate
+          schema:
+            type: string
+            format: YYYY-MM-DD
+            example: 2022-01-01
+          description: Alle Menüs, die vor diesem Datum liegen
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                    $ref: '#/components/schemas/MenueCardComplete'
+                  - type: array
+                    items:
+                    $ref: '#/components/schemas/MenueCardLazy'
+  
+  /mealreview:
+    get:
+      summary: Ruft alle Bewertungen ab, die den als Queryparametern angebenen Filterkriterien entsprechen
+      parameters:
+        - in: query
+          name: ID
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: ID der Bewertung
+        - in: query
+          name: mealId
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: Filtert nach der MealId
+        - in: query
+          name: usderId
+          schema:
+            type: string
+          description: Filtert nach dem User
+        - in: query
+          name: ratingequal
+          schema:
+            type: string
+          description: Filtert nach Bewertung
+        - in: query
+          name: ratinggreaterthan
+          schema:
+            type: string
+          description: Filtert nach Bewertung größer als der angegebene Wert
+        - in: query
+          name: ratinglowerthan
+          schema:
+            type: string
+          description: Filtert nach Bewertung kleiner als der angegebene Wert
+        - in: query
+          name: sortby
+          schema:
+            type: string
+            enum:
+              - rating
+              - date
+              - rating:desc
+              - date:desc
+              - rating:asc
+              - date:asc
+            default: date
+          description: Sortiert die Ergebnisse nach dem angegebenen Kriterium
+        - in: query
+          name: limit
+          schema:
+            type: string
+          description: Limitiert die Anzahl der Ergebnisse (Maximal 100)
+        - in: query
+          name: page
+          schema:
+            type: string
+          description: Gibt die Seite der Reviews an (1 = die ersten 100 Reviews, 2 = die nächsten 100 Reviews, usw.)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MealReview'
+    post:
+      summary: Erstellt eine neue Bewertung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealReviewUpdate'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealReview'
+    put:
+      summary: Aktualisiert eine Bewertung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealReviewUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealReview'
+                
+  /mealreview/{ID}:
+    delete:
+      summary: Löscht eine Bewertung
+      parameters:
+        - in: path
+          name: ID
+          required: true
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: ID der Bewertung
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealReview'
+  
+  /canteenreview:
+    get:
+      summary: Ruft alle Bewertungen ab, die den als Queryparametern angebenen Filterkriterien entsprechen
+      parameters:
+        - in: query
+          name: ID
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: ID der Bewertung
+        - in: query
+          name: canteenId
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: Filtert nach der CanteenId
+        - in: query
+          name: usderId
+          schema:
+            type: string
+          description: Filtert nach dem User
+        - in: query
+          name: ratingequal
+          schema:
+            type: string
+          description: Filtert nach Bewertung
+        - in: query
+          name: ratinggreaterthan
+          schema:
+            type: string
+          description: Filtert nach Bewertung größer als der angegebene Wert
+        - in: query
+          name: ratinglowerthan
+          schema:
+            type: string
+          description: Filtert nach Bewertung kleiner als der angegebene Wert
+        - in: query
+          name: sortby
+          schema:
+            type: string
+            enum:
+              - rating
+              - date
+              - rating:desc
+              - date:desc
+              - rating:asc
+              - date:asc
+            default: date
+          description: Sortiert die Ergebnisse nach dem angegebenen Kriterium
+        - in: query
+          name: limit
+          schema:
+            type: string
+          description: Limitiert die Anzahl der Ergebnisse (Maximal 100)
+        - in: query
+          name: page
+          schema:
+            type: string
+          description: Gibt die Seite der Reviews an (1 = die ersten 100 Reviews, 2 = die nächsten 100 Reviews, usw.)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CanteenReview'
+    post:
+      summary: Erstellt eine neue Bewertung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanteenReviewUpdate'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanteenReview'
+    put:
+      summary: Aktualisiert eine Bewertung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanteenReviewUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanteenReview'
+    
+  /canteenreview/{ID}:
+    delete:
+      summary: Löscht eine Bewertung
+      parameters:
+        - in: path
+          name: ID
+          required: true
+          schema:
+            type: string
+            format: hex
+            example: 5f6b9f3b0a1cfc0017a5d1f2
+          description: ID der Bewertung
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanteenReview'
+    
+     
